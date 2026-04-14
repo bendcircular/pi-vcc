@@ -130,11 +130,21 @@ const isSafeToken = (token: string): boolean => {
   return false;
 };
 
+/** Normalized entropy: bits-per-char divided by log2(alphabet size), range [0,1]. */
+const normalizedEntropy = (s: string): number => {
+  const alphabetSize = Math.max(2, new Set(s).size);
+  return shannon(s) / Math.log2(alphabetSize);
+};
+
 /** Second-pass: redact high-entropy tokens that survived pattern matching. */
 const entropyRedact = (text: string): string =>
   text.replace(HIGH_ENTROPY_RE, (tok) => {
     if (isSafeToken(tok)) return tok;
+    // Catch base16/hex tokens: max 4 bits/char raw but normalized entropy is high
+    if (/^[0-9a-fA-F]{32,}$/.test(tok)) return REDACTED;
     if (shannon(tok) > ENTROPY_THRESHOLD) return REDACTED;
+    // Normalized entropy catches low-alphabet secrets (e.g. pure hex shorter than 32)
+    if (tok.length >= 20 && normalizedEntropy(tok) > 0.85) return REDACTED;
     return tok;
   });
 

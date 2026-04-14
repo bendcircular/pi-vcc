@@ -183,9 +183,9 @@ describe("redact", () => {
       const out = redact('{ "apiKey": "sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabc" }');
       expect(out).toContain('"apiKey"');
     });
-    it("does not redact short/non-secret JSON values", () => {
-      // Value < 8 chars shouldn't be matched
-      expect(notRedacted(redact('{ "count": "three" }'))).toBe(true);
+    it("does not redact short sensitive JSON values (<8 chars)", () => {
+      // Sensitive key but value < 8 chars — should not be matched
+      expect(notRedacted(redact('{ "token": "short" }'))).toBe(true);
     });
   });
 

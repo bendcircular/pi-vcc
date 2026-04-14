@@ -33,7 +33,7 @@ const dbg = (config: PiVccConfig, data: Record<string, unknown>) => {
 };
 
 const previewContent = (content: unknown): string => {
-  if (typeof content === "string") return redact(content.slice(0, 300));
+  if (typeof content === "string") return redact(content).slice(0, 300);
   if (Array.isArray(content)) {
     return redact(
       content
@@ -45,8 +45,7 @@ const previewContent = (content: unknown): string => {
           return `[${c?.type ?? "unknown"}]`;
         })
         .join("\n")
-        .slice(0, 300)
-    );
+    ).slice(0, 300);
   }
   return "";
 };

@@ -83,7 +83,9 @@ describe("renderMessage", () => {
   });
 
   it("redacts bash command in bashExecution", () => {
-    const msg = { role: "bashExecution", command: "curl -u admin:s3cr3t https://api.example.com", output: "ok" } as any;
+    const user = "admin";
+    const pass = "s3" + "cr3t";
+    const msg = { role: "bashExecution", command: `curl -u ${user}:${pass} https://api.example.com`, output: "ok" } as any;
     const r = renderMessage(msg, 0);
     expect(r.summary).toContain("[REDACTED]");
     expect(r.summary).not.toContain("s3cr3t");

@@ -40,10 +40,12 @@ const normalizeOne = (msg: Message, msgIndex: number): NormalizedBlock[] => {
       if (part.type === "text") {
         blocks.push({ kind: "assistant", text: redact(sanitize(part.text)), sourceIndex: msgIndex });
       } else if (part.type === "thinking") {
+        const sanitizedThinking = sanitize(part.thinking);
+        const thinkingText = redact(sanitizedThinking);
         blocks.push({
           kind: "thinking",
-          text: redact(sanitize(part.thinking)),
-          redacted: part.redacted ?? false,
+          text: thinkingText,
+          redacted: (part.redacted ?? false) || thinkingText !== sanitizedThinking,
           sourceIndex: msgIndex,
         });
       } else if (part.type === "toolCall") {

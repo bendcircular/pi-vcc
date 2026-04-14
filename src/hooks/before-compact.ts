@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import { compile } from "../core/summarize";
+import { redact } from "../core/redact";
 import type { PiVccCompactionDetails } from "../details";
 
 const CONFIG_PATH = join(homedir(), ".pi", "agent", "pi-vcc-config.json");
@@ -32,18 +33,19 @@ const dbg = (config: PiVccConfig, data: Record<string, unknown>) => {
 };
 
 const previewContent = (content: unknown): string => {
-  if (typeof content === "string") return content.slice(0, 300);
+  if (typeof content === "string") return redact(content).slice(0, 300);
   if (Array.isArray(content)) {
-    return content
-      .map((c: any) => {
-        if (c?.type === "text") return c.text ?? "";
-        if (c?.type === "toolCall") return `[toolCall:${c.name}]`;
-        if (c?.type === "thinking") return `[thinking]`;
-        if (c?.type === "image") return `[image:${c.mimeType}]`;
-        return `[${c?.type ?? "unknown"}]`;
-      })
-      .join("\n")
-      .slice(0, 300);
+    return redact(
+      content
+        .map((c: any) => {
+          if (c?.type === "text") return c.text ?? "";
+          if (c?.type === "toolCall") return `[toolCall:${c.name}]`;
+          if (c?.type === "thinking") return `[thinking]`;
+          if (c?.type === "image") return `[image:${c.mimeType}]`;
+          return `[${c?.type ?? "unknown"}]`;
+        })
+        .join("\n")
+    ).slice(0, 300);
   }
   return "";
 };

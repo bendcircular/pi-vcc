@@ -131,6 +131,19 @@ describe("searchEntries", () => {
     expect(snip).not.toContain("line 5");
   });
 
+  // ── redaction in search snippets ──
+
+  it("redacts secrets in snippet from raw message content", () => {
+    const rawToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0In0.SflK";
+    const raw = `Authorization: Bearer ${rawToken}`;
+    const e: RenderedEntry[] = [{ index: 0, role: "tool_result", summary: "[bash] Authorization: Bearer [REDACTED]" }];
+    const m: Message[] = [{ role: "toolResult", content: [{ type: "text", text: raw }] } as any];
+    const r = searchEntries(e, m, "Bearer");
+    expect(r).toHaveLength(1);
+    expect(r[0].snippet).not.toContain(rawToken);
+    expect(r[0].snippet).toContain("[REDACTED]");
+  });
+
   it("snippet handles match at beginning", () => {
     const multiline = "TARGET here\nline 1\nline 2\nline 3";
     const e: RenderedEntry[] = [{ index: 0, role: "user", summary: "test" }];

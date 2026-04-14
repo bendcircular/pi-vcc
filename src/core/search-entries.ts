@@ -1,6 +1,7 @@
 import type { Message } from "@mariozechner/pi-ai";
 import type { RenderedEntry } from "./render-entries";
 import { textOf } from "./content";
+import { redact } from "./redact";
 
 export interface SearchHit extends RenderedEntry {
   /** Context snippet around the first matched term (only when query provided) */
@@ -147,12 +148,12 @@ const lineSnippet = (text: string, regex: RegExp, contextLines = 2): string | un
   return parts.join("\n");
 };
 
-/** Build full searchable text for a message. */
+/** Build full searchable text for a message (redacted). */
 const fullText = (msg: Message): string => {
   if ((msg as any).role === "bashExecution") {
-    return `${(msg as any).command ?? ""} ${(msg as any).output ?? ""}`;
+    return redact(`${(msg as any).command ?? ""} ${(msg as any).output ?? ""}`);
   }
-  return textOf(msg.content);
+  return redact(textOf(msg.content));
 };
 
 export const searchEntries = (

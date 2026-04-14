@@ -255,6 +255,42 @@ describe("redact", () => {
     });
   });
 
+  // ── DSN / connection-string credentials ───────────────────────────
+
+  describe("DSN / connection-string credentials", () => {
+    it("redacts postgres:// user:pass", () => {
+      expect(isRedacted(redact("postgres://dbuser:hunter2@db.example.com:5432/mydb"))).toBe(true);
+    });
+    it("redacts mysql:// credentials", () => {
+      expect(isRedacted(redact("mysql://root:s3cr3t@localhost:3306/app"))).toBe(true);
+    });
+    it("redacts redis://:password@host", () => {
+      expect(isRedacted(redact("redis://:s3cr3tp4ss@redis.example.com:6379"))).toBe(true);
+    });
+    it("preserves the scheme", () => {
+      const out = redact("postgres://dbuser:hunter2@db.example.com:5432/mydb");
+      expect(out).toContain("postgres://");
+      expect(out).toContain("@");
+    });
+    it("redacts DATABASE_URL env var with full DSN value", () => {
+      const out = redact("DATABASE_URL=postgres://dbuser:hunter2@db.example.com:5432/mydb");
+      // credentials must be gone; scheme and host may remain
+      expect(out).not.toContain("hunter2");
+      expect(out).not.toContain("dbuser:hunter2");
+    });
+  });
+
+  // ── Entropy false-positive guard ──────────────────────────────────
+
+  describe("entropy false-positive guard", () => {
+    it("does NOT redact DATABASE_URL= prefix as a token", () => {
+      // Previously the = in HIGH_ENTROPY_RE stitched DATABASE_URL=postgres
+      // into one token, redacting the scheme instead of the credentials.
+      const out = redact("DATABASE_URL=postgres://safe@db.example.com/mydb");
+      expect(out).not.toMatch(/^\[REDACTED\]:\/\//); // scheme must not be [REDACTED]
+    });
+  });
+
   // ── Idempotency ───────────────────────────────────────────────────
 
   describe("idempotency", () => {

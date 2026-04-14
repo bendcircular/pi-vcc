@@ -44,6 +44,12 @@ const RULES: RedactionRule[] = [
   // ── curl -u user:pass ──
   { re: /curl\s[^|;]*-u\s+\S+:\S+/g, replace: (m) => m.replace(/-u\s+\S+:\S+/, `-u ${REDACTED}`) },
 
+  // ── DSN / connection-string credentials ──
+  // postgres://user:pass@host, mysql://user:pass@host, redis://:pass@host, etc.
+  // Matches any URI scheme://[anything without whitespace or @]@
+  { re: /([a-z][a-z0-9+.-]*):\/\/([^@\s]{1,256})@/gi,
+    replace: (_m, scheme) => `${scheme}://[REDACTED]@` },
+
   // ── AWS keys ──
   { re: /(?:AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|aws_secret_access_key|aws_session_token)[=:\s]+\S+/gi, replace: prefixReplace },
   { re: /(?:AKIA|ASIA)[A-Z0-9]{16,}/g, replace: () => REDACTED },
@@ -97,7 +103,10 @@ const shannon = (s: string): number => {
   return ent;
 };
 
-const HIGH_ENTROPY_RE = /[A-Za-z0-9+/=_-]{20,}/g;
+// Note: `=` intentionally excluded — it bridges key=value pairs (e.g. DATABASE_URL=postgres)
+// and causes false positives. Base64 padding `=` is only 0-2 trailing chars and doesn't
+// affect entropy detection meaningfully.
+const HIGH_ENTROPY_RE = /[A-Za-z0-9+/_-]{20,}/g;
 const ENTROPY_THRESHOLD = 4.0;
 
 /** Words that look like high-entropy but are actually common code/prose tokens. */

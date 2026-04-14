@@ -15,7 +15,7 @@ const toolCalls = (content: Message["content"]): string => {
   if (!content || typeof content === "string") return "";
   return content
     .filter((c) => c.type === "toolCall")
-    .map((c) => `${c.name}(${summarizeToolArgs(c.arguments)})`)
+    .map((c) => `${c.name}(${redact(summarizeToolArgs(c.arguments))})`)
     .join(", ");
 };
 

@@ -93,5 +93,15 @@ describe("renderMessage", () => {
     const r = renderMessage(userMsg("what does normalize.ts do?"), 0);
     expect(r.summary).toBe("what does normalize.ts do?");
   });
+
+  it("redacts Bearer token in bash tool call argument", () => {
+    const tok = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.abc";
+    const r = renderMessage(
+      assistantWithToolCall("bash", { command: `curl -H "Authorization: Bearer ${tok}" https://api.example.com` }),
+      0
+    );
+    expect(r.summary).toContain("[REDACTED]");
+    expect(r.summary).not.toContain(tok);
+  });
 });
 
